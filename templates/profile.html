@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Fitness Profile & Metrics | AI-Workout and Diet Plan{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">Fitness Profile & Body Metrics</h1>
+    <p style="color: var(--text-muted);">
+      Provide your physiological measurements, weekly activity level, and dietary preferences. Our machine learning models will tailor your workouts and macronutrients accordingly.
+    </p>
+  </div>
+
+  <div class="grid-3" style="grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Profile Form -->
+    <div class="card">
+      <form action="{{ url_for('profile') }}" method="POST" id="profile-form">
+        <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-dark); padding-bottom: 0.5rem;">
+          <i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Personal Information
+        </h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="full_name">Full Name</label>
+            <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name or '' }}" placeholder="Your Name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="age">Age (Years) *</label>
+            <input type="number" id="age" name="age" class="form-control" value="{{ profile.age or 25 }}" min="14" max="100" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="gender">Biological Sex / Gender *</label>
+            <select id="gender" name="gender" class="form-select" required>
+              <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>Male</option>
+              <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>Female</option>
+              <option value="other" {% if profile.gender == 'other' %}selected{% endif %}>Other / Non-Binary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="height_cm">Height (cm) *</label>
+            <input type="number" id="height_cm" name="height_cm" class="form-control" value="{{ profile.height_cm or 175 }}" min="80" max="250" step="0.5" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="weight_kg">Current Weight (kg) *</label>
+            <input type="number" id="weight_kg" name="weight_kg" class="form-control" value="{{ profile.weight_kg or 70 }}" min="30" max="300" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="target_weight_kg">Target Weight (kg) *</label>
+            <input type="number" id="target_weight_kg" name="target_weight_kg" class="form-control" value="{{ profile.target_weight_kg or profile.weight_kg or 70 }}" min="30" max="300" step="0.1" required>
+          </div>
+        </div>
+
+        <h3 style="color: #fff; font-size: 1.15rem; margin: 1.75rem 0 1.25rem; border-bottom: 1px solid var(--border-dark); padding-bottom: 0.5rem;">
+          <i class="fa-solid fa-bullseye" style="color: var(--secondary);"></i> Fitness Goals & Lifestyle
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label" for="fitness_goal">Primary Fitness Objective *</label>
+          <select id="fitness_goal" name="fitness_goal" class="form-select" required>
+            <option value="weight_loss" {% if profile.fitness_goal == 'weight_loss' %}selected{% endif %}>Weight Loss (Caloric Deficit & Fat Burn)</option>
+            <option value="muscle_building" {% if profile.fitness_goal == 'muscle_building' %}selected{% endif %}>Muscle Building / Hypertrophy (Lean Mass Growth)</option>
+            <option value="weight_gain" {% if profile.fitness_goal == 'weight_gain' %}selected{% endif %}>Weight Gain (Caloric Surplus & Mass Building)</option>
+            <option value="general_fitness" {% if profile.fitness_goal == 'general_fitness' %}selected{% endif %}>General Fitness & Maintenance (Tone & Energy)</option>
+            <option value="endurance" {% if profile.fitness_goal == 'endurance' %}selected{% endif %}>Endurance & Stamina (Aerobic Capacity)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="activity_level">Daily Activity Level *</label>
+            <select id="activity_level" name="activity_level" class="form-select" required>
+              <option value="sedentary" {% if profile.activity_level == 'sedentary' %}selected{% endif %}>Sedentary (Desk job, minimal activity)</option>
+              <option value="light" {% if profile.activity_level == 'light' %}selected{% endif %}>Light Activity (Light walks, 1-2 days active)</option>
+              <option value="moderate" {% if profile.activity_level == 'moderate' %}selected{% endif %}>Moderate (Active lifestyle, 3-4 days active)</option>
+              <option value="very_active" {% if profile.activity_level == 'very_active' %}selected{% endif %}>Very Active (Hard training, 5-7 days active)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="exercise_frequency">Workout Frequency (Days/Week) *</label>
+            <select id="exercise_frequency" name="exercise_frequency" class="form-select" required>
+              <option value="1-2" {% if profile.exercise_frequency == '1-2' %}selected{% endif %}>1 - 2 Days per week</option>
+              <option value="3-4" {% if profile.exercise_frequency == '3-4' %}selected{% endif %}>3 - 4 Days per week</option>
+              <option value="5-6" {% if profile.exercise_frequency == '5-6' %}selected{% endif %}>5 - 6 Days per week</option>
+              <option value="daily" {% if profile.exercise_frequency == 'daily' %}selected{% endif %}>Daily (Active 7 days)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="dietary_preference">Dietary Lifestyle / Food Preference *</label>
+          <select id="dietary_preference" name="dietary_preference" class="form-select" required>
+            <option value="standard" {% if profile.dietary_preference == 'standard' %}selected{% endif %}>Standard Omnivore (Chicken, Fish, Eggs, Meat & Veggies)</option>
+            <option value="vegetarian" {% if profile.dietary_preference == 'vegetarian' %}selected{% endif %}>Vegetarian (Paneer, Dairy, Lentils, Tofu, Grains)</option>
+            <option value="vegan" {% if profile.dietary_preference == 'vegan' %}selected{% endif %}>100% Plant-Based / Vegan (Tofu, Tempeh, Legumes, Seeds)</option>
+            <option value="keto" {% if profile.dietary_preference == 'keto' %}selected{% endif %}>Ketogenic (Low Carb, High Healthy Fat)</option>
+            <option value="high_protein" {% if profile.dietary_preference == 'high_protein' %}selected{% endif %}>High Protein / Athlete Focus (Lean Meats, Whey, Egg Whites)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="health_conditions">Injuries, Allergies or Notes (Optional)</label>
+          <textarea id="health_conditions" name="health_conditions" class="form-control" rows="2" placeholder="e.g. Lower back sensitivity, lactose intolerance, asthma">{{ profile.health_conditions or '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;">
+          <i class="fa-solid fa-sparkles"></i> Save Profile & Generate AI Plan
+        </button>
+      </form>
+    </div>
+
+    <!-- Live BMI & Target Summary Sidecard -->
+    <div>
+      <div class="card" style="position: sticky; top: 100px;">
+        <h3 class="card-title" style="margin-bottom: 1rem;">
+          <i class="fa-solid fa-heart-pulse" style="color: var(--primary);"></i> Live Body Metrics
+        </h3>
+
+        <div id="side-bmi-display" style="background: rgba(15, 23, 42, 0.7); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-dark); margin-bottom: 1.25rem; text-align: center;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Estimated BMI</div>
+          <div id="side-bmi-val" style="font-size: 2.5rem; font-weight: 800; color: #fff;">
+            {{ "%.1f"|format(bmi_preview[0]) if bmi_preview else "22.9" }}
+          </div>
+          <div id="side-bmi-badge">
+            <span class="badge badge-{{ bmi_preview[2] if bmi_preview else 'success' }}">
+              {{ bmi_preview[1] if bmi_preview else 'Normal Weight' }}
+            </span>
+          </div>
+        </div>
+
+       
+          <div style="margin-bottom: 0.6rem; display: flex; justify-content: space-between;">
+            <span>Healthy Range:</span>
+            <strong style="color: var(--primary);">18.5 – 24.9</strong>
+          </div>
+          <div style="margin-bottom: 0.6rem; display: flex; justify-content: space-between;">
+            <span>Goal Weight Gap:</span>
+            <strong id="weight-gap-display" style="color: #fff;">0.0 kg</strong>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-dark); font-size: 0.8rem; color: #64748b;">
+          💡 When you click <strong>Save Profile</strong>, the Machine Learning system recalculates your BMR, TDEE, optimal workout split, and full 7-day nutritional chart.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateSideMetrics() {
+    const h = parseFloat(document.getElementById("height_cm").value);
+    const w = parseFloat(document.getElementById("weight_kg").value);
+    const tw = parseFloat(document.getElementById("target_weight_kg").value);
+
+    if (h > 0 && w > 0) {
+      const hm = h / 100.0;
+      const bmi = (w / (hm * hm)).toFixed(1);
+      document.getElementById("side-bmi-val").textContent = bmi;
+
+      let cat = "Normal Weight";
+      let color = "success";
+      if (bmi < 18.5) { cat = "Underweight"; color = "info"; }
+      else if (bmi <= 24.9) { cat = "Normal Weight"; color = "success"; }
+      else if (bmi <= 29.9) { cat = "Overweight"; color = "warning"; }
+      else { cat = "Obesity"; color = "danger"; }
+
+      document.getElementById("side-bmi-badge").innerHTML = `<span class="badge badge-${color}">${cat}</span>`;
+    }
+
+    if (w > 0 && tw > 0) {
+      const diff = (tw - w).toFixed(1);
+      const sign = diff > 0 ? "+" : "";
+      document.getElementById("weight-gap-display").textContent = `${sign}${diff} kg`;
+    }
+  }
+
+  document.getElementById("height_cm").addEventListener("input", updateSideMetrics);
+  document.getElementById("weight_kg").addEventListener("input", updateSideMetrics);
+  document.getElementById("target_weight_kg").addEventListener("input", updateSideMetrics);
+  updateSideMetrics();
+</script>
+{% endblock %}

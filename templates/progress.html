@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Tracking & Analytics | FitAI{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">Progress Tracking & Analytics</h1>
+    <p style="color: var(--text-muted);">
+      Monitor your weight progression, BMI trajectory, workouts, hydration, and body measurements.
+    </p>
+  </div>
+
+  <button class="btn btn-primary" onclick="document.getElementById('log-entry-card').scrollIntoView({behavior: 'smooth'})">
+    <i class="fa-solid fa-plus"></i> Record New Log
+  </button>
+</div>
+
+<!-- 4 Top Analytics Summary Cards -->
+<div class="grid-4" style="margin-bottom: 2.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon primary"><i class="fa-solid fa-weight-scale"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Net Weight Change</div>
+      <div class="stat-value">{{ weight_change }} kg</div>
+      <div class="stat-subtitle">Goal: {{ profile.target_weight_kg }} kg</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon secondary"><i class="fa-solid fa-dumbbell"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Workouts Logged</div>
+      <div class="stat-value">{{ total_workouts }}</div>
+      <div class="stat-subtitle">Consistency count</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon accent"><i class="fa-solid fa-fire"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Calories Burned</div>
+      <div class="stat-value">{{ total_calories_burned|int }}</div>
+      <div class="stat-subtitle">Total energy logged</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon warning"><i class="fa-solid fa-droplet"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Avg Daily Water</div>
+      <div class="stat-value">{{ (avg_water_ml / 1000)|round(1) }} L</div>
+      <div class="stat-subtitle">
+    Target:
+    {% if profile and profile.weight %}
+        {{ (profile.weight* 0.035)|round(1) }} L
+    {% else %}
+        2.5 L
+    {% endif %}
+</div>
+  </div>
+</div>
+
+<!-- Interactive Chart.js Visualizations -->
+<div class="grid-2" style="margin-bottom: 2.5rem;">
+  <!-- Weight Trendline -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Weight Progression vs Target</h3>
+      <span class="badge badge-success">Live Chart</span>
+    </div>
+    <div style="height: 300px; position: relative;">
+      <canvas id="progressChart"></canvas>
+      <div id="chart-empty-msg" style="display: none; position: absolute; top: 45%; width: 100%; text-align: center; color: var(--text-muted);">
+        No logs recorded yet. Add your first progress log below!
+      </div>
+    </div>
+  </div>
+
+  <!-- BMI Trajectory -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fa-solid fa-heart-pulse" style="color: var(--secondary);"></i> BMI Trajectory</h3>
+      <span class="badge badge-info">Healthy Zone: 18.5 - 24.9</span>
+    </div>
+    <div style="height: 300px; position: relative;">
+      <canvas id="bmiTrajectoryChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Log New Entry Card -->
+<div id="log-entry-card" class="card" style="margin-bottom: 2.5rem;">
+  <div class="card-header">
+    <h3 class="card-title"><i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Log Daily Fitness Progress</h3>
+  </div>
+
+  <form action="{{ url_for('progress') }}" method="POST">
+    <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="form-group">
+        <label class="form-label" for="log_date">Log Date *</label>
+        <input type="date" id="log_date" name="log_date" class="form-control" value="{{ today_date }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="weight_kg">Weight (kg) *</label>
+        <input type="number" id="weight_kg" name="weight_kg" class="form-control" step="0.1" value="{{ profile.weight_kg }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="workouts_completed">Workouts Completed</label>
+        <input type="number" id="workouts_completed" name="workouts_completed" class="form-control" min="0" max="5" value="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="calories_burned">Calories Burned (kcal)</label>
+        <input type="number" id="calories_burned" name="calories_burned" class="form-control" step="10" placeholder="e.g. 450">
+      </div>
+    </div>
+
+    <div class="form-row" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="form-group">
+        <label class="form-label" for="water_ml">Water Consumed (ml)</label>
+        <input type="number" id="water_ml" name="water_ml" class="form-control" step="100" placeholder="e.g. 2500" value="2000">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="chest_cm">Chest Circumference (cm)</label>
+        <input type="number" id="chest_cm" name="chest_cm" class="form-control" step="0.5" placeholder="Optional">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="waist_cm">Waist Circumference (cm)</label>
+        <input type="number" id="waist_cm" name="waist_cm" class="form-control" step="0.5" placeholder="Optional">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="hips_cm">Hips Circumference (cm)</label>
+        <input type="number" id="hips_cm" name="hips_cm" class="form-control" step="0.5" placeholder="Optional">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="notes">Workout / Nutrition Notes</label>
+      <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. High energy bench press session, drank 3L water, felt great.">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Save Progress Log
+    </button>
+  </form>
+</div>
+
+<!-- Past Logs Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Historical Progress Logs</h3>
+    <span class="badge badge-info">{{ logs|length }} Entries</span>
+  </div>
+
+  {% if logs and logs|length > 0 %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Weight</th>
+            <th>BMI</th>
+            <th>Workouts</th>
+            <th>Calories Burned</th>
+            <th>Water (L)</th>
+            <th>Measurements (C/W/H)</th>
+            <th>Notes</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td style="font-weight: 700; color: #fff;">{{ log.log_date }}</td>
+              <td><strong style="color: var(--primary);">{{ log.weight_kg }} kg</strong></td>
+              <td>{{ "%.1f"|format(log.bmi) if log.bmi else '-' }}</td>
+              <td>{{ log.workouts_completed }} session</td>
+              <td>{{ log.calories_burned|int }} kcal</td>
+              <td>{{ (log.water_ml / 1000)|round(2) }} L</td>
+              <td style="font-size: 0.85rem; color: #94a3b8;">
+                {{ log.chest_cm or '-' }} / {{ log.waist_cm or '-' }} / {{ log.hips_cm or '-' }}
+              </td>
+              <td style="font-size: 0.85rem; color: #cbd5e1; max-width: 200px;">{{ log.notes or '-' }}</td>
+              <td style="text-align: right;">
+                <form action="{{ url_for('api_delete_log', log_id=log.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Delete this log entry?')">
+                  <button type="submit" class="btn btn-danger btn-sm" title="Delete entry">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+      No historical progress logged yet. Use the form above to record your measurements!
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/tracker.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}AI Workout & Diet Recommendations | FitAI{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">
+      <i class="fa-solid fa-sparkles"></i> AI Recommendation Engine v2.0
+    </div>
+    <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">Your Personalized Fitness Plan</h1>
+    <p style="color: var(--text-muted);">
+      Custom engineered for: <strong style="color: #fff;">{{ profile.fitness_goal|replace('_', ' ')|title }}</strong> &bull; {{ profile.exercise_frequency }} sessions/week &bull; {{ profile.dietary_preference|title }}
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('print_recommendations') }}" target="_blank" class="btn btn-outline btn-sm">
+      <i class="fa-solid fa-print"></i> Print / PDF
+    </a>
+    <form action="{{ url_for('regenerate_recommendations') }}" method="POST" style="display: inline;">
+      <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Recalculate and re-optimize your AI plan?')">
+        <i class="fa-solid fa-arrows-rotate"></i> Re-Optimize Plan
+      </button>
+    </form>
+    <a href="{{ url_for('profile') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-sliders"></i> Edit Goals
+    </a>
+  </div>
+</div>
+
+<!-- Tabs Wrapper -->
+<div class="tabs-wrapper">
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="workout-tab">
+      <i class="fa-solid fa-dumbbell"></i> AI Workout Routine ({{ workout_plan.split_name }})
+    </button>
+    <button class="tab-btn" data-tab="diet-tab">
+      <i class="fa-solid fa-apple-whole"></i> AI Diet & Nutrition ({{ rec.target_calories|int }} kcal)
+    </button>
+  </div>
+
+  <!-- WORKOUT PLAN TAB -->
+  <div id="workout-tab" class="tab-pane active">
+    <!-- Workout Header Banner -->
+    <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Recommended Program Structure</span>
+          <h2 style="color: #fff; font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem;">{{ workout_plan.split_name }}</h2>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-dark);">
+            <div style="font-size: 0.72rem; color: var(--text-muted);">INTENSITY</div>
+            <strong style="color: var(--primary);">{{ workout_plan.intensity }}</strong>
+          </div>
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-dark);">
+            <div style="font-size: 0.72rem; color: var(--text-muted);">SESSIONS</div>
+            <strong style="color: var(--secondary);">{{ workout_plan.weekly_sessions }} days / week</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-dark); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.88rem;">
+        <div>
+          <span style="color: var(--warning); font-weight: 700;">🔥 Warm-up:</span>
+          <span style="color: #cbd5e1;">{{ workout_plan.warmup }}</span>
+        </div>
+        <div>
+          <span style="color: var(--secondary); font-weight: 700;">🧘 Cool-down:</span>
+          <span style="color: #cbd5e1;">{{ workout_plan.cooldown }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Exercise Schedule -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for day in workout_plan.days %}
+        <div class="card" style="border-left: 4px solid {% if day.exercises|length > 0 %}var(--primary){% else %}var(--border-dark){% endif %};">
+          <div class="card-header">
+            <div>
+              <span class="badge badge-{% if day.exercises|length > 0 %}success{% else %}info{% endif %}" style="margin-bottom: 0.3rem;">
+                {{ day.day }}
+              </span>
+              <h3 style="color: #fff; font-size: 1.25rem; font-weight: 700;">{{ day.focus }}</h3>
+            </div>
+            <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">{{ day.type }}</span>
+          </div>
+
+          {% if day.exercises and day.exercises|length > 0 %}
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Exercise</th>
+                    <th>Sets</th>
+                    <th>Reps / Target</th>
+                    <th>Rest Interval</th>
+                    <th>Form & Technique Cue</th>
+                    <th style="text-align: right;">Demo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ex in day.exercises %}
+                    <tr>
+                      <td style="font-weight: 700; color: #fff;">{{ ex.name }}</td>
+                      <td><span style="color: var(--primary); font-weight: 700;">{{ ex.sets }}</span></td>
+                      <td>{{ ex.reps }}</td>
+                      <td><span style="color: var(--warning);">{{ ex.rest }}</span></td>
+                      <td style="font-size: 0.85rem; color: #94a3b8;">{{ ex.cue }}</td>
+                      <td style="text-align: right;">
+                        <a href="{{ url_for('videos') }}?q={{ ex.name }}" class="btn btn-outline btn-sm">
+                          <i class="fa-solid fa-play"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.95rem;">
+              <i class="fa-solid fa-moon" style="font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.5rem; display: block;"></i>
+              Rest & Regeneration. Light mobility, foam rolling, and adequate sleep.
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- DIET & NUTRITION PLAN TAB -->
+  <div id="diet-tab" class="tab-pane">
+    <!-- Macro Summary Cards -->
+    <div class="grid-4" style="margin-bottom: 2rem;">
+      <div class="card" style="text-align: center; border-top: 4px solid #fff;">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">TOTAL DAILY CALORIES</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.25rem 0;">{{ rec.target_calories|int }}</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">BMR: {{ rec.bmr|int }} &bull; TDEE: {{ rec.tdee|int }}</div>
+      </div>
+
+      <div class="card" style="text-align: center; border-top: 4px solid var(--primary);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PROTEIN TARGET</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 0.25rem 0;">{{ rec.protein_g|int }}g</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ diet_plan.macronutrients.protein_pct }}% of total calories</div>
+      </div>
+
+      <div class="card" style="text-align: center; border-top: 4px solid var(--secondary);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">CARBOHYDRATES</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--secondary); margin: 0.25rem 0;">{{ rec.carbs_g|int }}g</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ diet_plan.macronutrients.carbs_pct }}% of total calories</div>
+      </div>
+
+      <div class="card" style="text-align: center; border-top: 4px solid var(--warning);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HEALTHY FATS</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--warning); margin: 0.25rem 0;">{{ rec.fat_g|int }}g</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ diet_plan.macronutrients.fat_pct }}% of total calories</div>
+      </div>
+    </div>
+
+    <!-- Nutritional Guidelines -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-title" style="margin-bottom: 1rem;">
+        <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Nutritional Strategy & Hydration Principles
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+        {% for rule in diet_plan.guidelines %}
+          <div style="background: rgba(15, 23, 42, 0.5); padding: 0.85rem 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary); font-size: 0.9rem; color: #cbd5e1;">
+            {{ rule }}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 7-Day Meal Schedule -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for day in diet_plan.days %}
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span class="badge badge-info" style="margin-bottom: 0.2rem;">{{ day.day }}</span>
+              <h3 style="color: #fff; font-size: 1.25rem; font-weight: 700;">Daily Meal Plan</h3>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Total: <strong style="color: #fff;">{{ day.totals.calories }} kcal</strong> &bull;
+              <span style="color: var(--primary);">{{ day.totals.protein }}g P</span> &bull;
+              <span style="color: var(--secondary);">{{ day.totals.carbs }}g C</span> &bull;
+              <span style="color: var(--warning);">{{ day.totals.fat }}g F</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+            {% for slot_name, meal in day.meals.items() %}
+              <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-dark); border-radius: var(--radius-md); padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--secondary); font-weight: 700; margin-bottom: 0.35rem;">{{ slot_name }}</div>
+                  <div style="color: #fff; font-weight: 600; font-size: 0.88rem; line-height: 1.4; margin-bottom: 0.75rem;">{{ meal.name }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--border-dark); padding-top: 0.5rem;">
+                    <strong>{{ meal.calories }}</strong> kcal &bull; <span style="color: var(--primary);">{{ meal.p }}g P</span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

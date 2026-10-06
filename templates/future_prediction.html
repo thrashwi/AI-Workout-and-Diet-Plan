@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}AI Future Progress Prediction | AI-Workout and Diet Plan{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 1100px; margin: 2rem auto; padding: 0 1rem;">
+
+    <!-- Header -->
+    <div style="text-align:center; margin-bottom:2rem;">
+
+        <div class="brand-icon"
+             style="margin:0 auto 1rem; width:55px; height:55px; font-size:1.6rem;">
+
+            <i class="fa-solid fa-chart-line"></i>
+
+        </div>
+
+        <h1 style="color:#fff; font-size:2rem; font-weight:800;">
+            AI Future Progress Prediction
+        </h1>
+
+        <p style="color:var(--text-muted); margin-top:0.5rem;">
+            Estimated changes in your weight, BMI, workout level and diet plan.
+        </p>
+
+    </div>
+
+
+    <!-- Current Status -->
+    <div class="card" style="margin-bottom:1.5rem;">
+
+        <div class="card-header">
+
+            <h3>
+                <i class="fa-solid fa-user"></i>
+                Current Status
+            </h3>
+
+        </div>
+
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:1rem;
+            padding-top:1rem;
+        ">
+
+            <div class="card" style="text-align:center;">
+
+                <div style="color:var(--text-muted);">
+                    Current Weight
+                </div>
+
+                <h2 style="color:#fff;">
+                    {{ current_weight }} kg
+                </h2>
+
+            </div>
+
+
+            <div class="card" style="text-align:center;">
+
+                <div style="color:var(--text-muted);">
+                    Current BMI
+                </div>
+
+                <h2 style="color:#fff;">
+                    {{ current_bmi }}
+                </h2>
+
+            </div>
+
+
+            <div class="card" style="text-align:center;">
+
+                <div style="color:var(--text-muted);">
+                    Fitness Level
+                </div>
+
+                <h2 style="color:#fff;">
+                    {{ profile["fitness_level"] }}
+                </h2>
+
+            </div>
+
+
+            <div class="card" style="text-align:center;">
+
+                <div style="color:var(--text-muted);">
+                    Fitness Goal
+                </div>
+
+                <h2 style="color:#fff;">
+                    {{ profile["fitness_goal"] }}
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Prediction Cards -->
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+        gap:1.2rem;
+    ">
+
+        {% for prediction in predictions %}
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3>
+                    <i class="fa-solid fa-calendar-days"></i>
+                    {{ prediction.period }}
+                </h3>
+
+            </div>
+
+
+            <!-- Weight -->
+            <div style="margin-top:1rem;">
+
+                <div style="color:var(--text-muted); font-size:0.9rem;">
+                    Predicted Weight
+                </div>
+
+                <div style="
+                    font-size:1.8rem;
+                    font-weight:800;
+                    color:#fff;
+                    margin-top:0.25rem;
+                ">
+
+                    {{ prediction.weight }} kg
+
+                </div>
+
+            </div>
+
+
+            <!-- BMI -->
+            <div style="margin-top:1rem;">
+
+                <div style="color:var(--text-muted); font-size:0.9rem;">
+                    Estimated BMI
+                </div>
+
+                <div style="
+                    font-size:1.3rem;
+                    font-weight:700;
+                    color:#fff;
+                ">
+
+                    {{ prediction.bmi }}
+
+                </div>
+
+            </div>
+
+
+            <!-- Workout -->
+            <div style="margin-top:1rem;">
+
+                <div style="color:var(--text-muted); font-size:0.9rem;">
+                    Workout Level
+                </div>
+
+                <div style="
+                    font-size:1.05rem;
+                    font-weight:600;
+                    color:var(--primary);
+                ">
+
+                    {{ prediction.workout_level }}
+
+                </div>
+
+            </div>
+
+
+            <!-- Diet -->
+            <div style="
+                margin-top:1rem;
+                padding-top:1rem;
+                border-top:1px solid var(--border-dark);
+            ">
+
+                <div style="color:var(--text-muted); font-size:0.9rem;">
+                    Diet Focus
+                </div>
+
+                <p style="
+                    color:#fff;
+                    margin-top:0.4rem;
+                    line-height:1.5;
+                ">
+
+                    {{ prediction.diet_focus }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- Explanation -->
+    <div class="card" style="margin-top:1.5rem;">
+
+        <div class="card-header">
+
+            <h3>
+                <i class="fa-solid fa-lightbulb"></i>
+                How the Prediction Works
+            </h3>
+
+        </div>
+
+        <div style="
+            color:var(--text-muted);
+            line-height:1.7;
+            padding-top:1rem;
+        ">
+
+            <p>
+                The system uses your current weight, height, BMI,
+                fitness level and fitness goal to estimate future progress.
+            </p>
+
+            <p style="margin-top:0.7rem;">
+                The prediction is generated for 1 month, 3 months,
+                6 months and 1 year.
+            </p>
+
+            <p style="margin-top:0.7rem;">
+                Your diet focus and workout level are adjusted according
+                to the selected fitness goal and expected progress.
+            </p>
+
+            <p style="margin-top:0.7rem;">
+                <strong>Note:</strong> These are estimated project values.
+                Actual results can vary depending on diet, exercise,
+                consistency, sleep and other factors.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Back Button -->
+    <div style="text-align:center; margin-top:1.5rem;">
+
+        <a href="{{ url_for('dashboard') }}"
+           class="btn btn-primary">
+
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Dashboard
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Workout and Diet Plan | Intelligent Fitness & Nutrition{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="padding: 3.5rem 0; text-align: center; max-width: 900px; margin: 0 auto;">
+  <h1 style="font-size: 3rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+   AI-Workout & Diet Plan
+  </h1>
+  <p style="font-size: 1.15rem; color: var(--text-muted); margin-bottom: 2rem; max-width: 720px; margin-left: auto; margin-right: auto;">
+    Stop following generic routines. Our AI-driven engine analyzes your age, measurements, metabolic rate, fitness goals, and dietary choices to generate custom workout splits, macronutrient targets, and 7-day meal plans.
+  </p>
+  <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+      <i class="fa-solid fa-dumbbell"></i> Start Free Assessment
+    </a>
+    <a href="#bmi-calculator" class="btn btn-secondary btn-lg">
+      <i class="fa-solid fa-calculator"></i> Calculate Your BMI
+    </a>
+  </div>
+</section>
+
+<!-- Stats Strip -->
+<div class="grid-4" style="margin-bottom: 3.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon primary"><i class="fa-solid fa-brain"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">AI Engine</div>
+      <div class="stat-value">Adaptive</div>
+      <div class="stat-subtitle">Random Forest ML</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon secondary"><i class="fa-solid fa-utensils"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Meal Plans</div>
+      <div class="stat-value">5 Styles</div>
+      <div class="stat-subtitle">Keto, Vegan, High-Protein</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon accent"><i class="fa-solid fa-fire"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Metabolism</div>
+      <div class="stat-value">BMR / TDEE</div>
+      <div class="stat-subtitle">Mifflin-St Jeor Science</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon warning"><i class="fa-solid fa-map-pin"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Gym Locator</div>
+      <div class="stat-value">Interactive</div>
+      <div class="stat-subtitle">Leaflet & Live Maps</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick BMI Calculator Section -->
+<section id="bmi-calculator" class="card" style="margin-bottom: 3.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.85));">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title"><i class="fa-solid fa-calculator" style="color: var(--primary);"></i> Instant BMI & Healthy Weight Calculator</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+        Calculate your Body Mass Index (BMI) using the standard metric formula: \(\text{Weight (kg)} / \text{Height (m)}^2\)
+      </p>
+    </div>
+  </div>
+
+  <div class="grid-2" style="align-items: center;">
+    <form id="quick-bmi-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="bmi-height">Height (cm)</label>
+          <input type="number" id="bmi-height" class="form-control" placeholder="e.g. 175" min="80" max="250" required value="175">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="bmi-weight">Weight (kg)</label>
+          <input type="number" id="bmi-weight" class="form-control" placeholder="e.g. 70" step="0.1" min="30" max="300" required value="72">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="fa-solid fa-bolt"></i> Calculate BMI Now
+      </button>
+    </form>
+
+    <div id="bmi-result-box" style="background: rgba(15, 23, 42, 0.6); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-dark);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span style="color: var(--text-muted); font-size: 0.9rem;">Your Body Mass Index:</span>
+        <span id="bmi-cat" class="badge badge-success">Normal Weight</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span id="bmi-val" style="font-size: 2.75rem; font-weight: 800; color: #fff;">23.5</span>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">kg/m²</span>
+      </div>
+      <p id="bmi-desc" style="color: #cbd5e1; font-size: 0.88rem; margin-bottom: 0.75rem;">
+        You have a healthy body weight. Maintain your fitness with balanced exercise and nutrition.
+      </p>
+      <div id="bmi-ideal" style="font-size: 0.82rem; color: var(--secondary); font-weight: 600;">
+        Ideal Range: 56.7 kg - 76.3 kg
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Core Features Grid -->
+<section id="features" style="margin-bottom: 3.5rem;">
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <h2 style="font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Comprehensive Fitness Ecosystem</h2>
+    <p style="color: var(--text-muted);">Everything you need to transform your body, nutrition, and daily habits in one place.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="stat-icon primary" style="margin-bottom: 1rem;"><i class="fa-solid fa-dumbbell"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">AI Workout Routines</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Predicts the optimal split (Push/Pull/Legs, Upper/Lower, HIIT) tailored to your weekly frequency, with sets, reps, cues, and rest periods.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon secondary" style="margin-bottom: 1rem;"><i class="fa-solid fa-bowl-food"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">Smart Diet & Nutrition</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Calculates daily calorie targets, protein, carbs, and fat ratios with 7-day meal charts supporting Vegetarian, Vegan, Keto, and Standard diets.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon accent" style="margin-bottom: 1rem;"><i class="fa-solid fa-video"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">Exercise & Recipe Videos</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Learn proper biomechanical exercise form and cook high-protein, calorie-conscious meals with curated HD video demonstrations.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon warning" style="margin-bottom: 1rem;"><i class="fa-solid fa-location-dot"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">Nearby Gym Finder</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Interactive Leaflet map showing verified fitness clubs, gyms, crossfit boxes, addresses, distance calculation, and driving directions.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon primary" style="margin-bottom: 1rem;"><i class="fa-solid fa-chart-line"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">Progress & BMI Analytics</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Log weight, body measurements, hydration, and calories burned with Chart.js trendlines comparing actual progress to target goals.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="stat-icon danger" style="margin-bottom: 1rem;"><i class="fa-solid fa-bell"></i></div>
+      <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem;">Reminders & Alerts</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Set browser notifications for morning workouts, meal windows, and hydration goals to build ironclad consistency.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action -->
+<section class="card" style="text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15)); border-color: rgba(16, 185, 129, 0.3);">
+  <h2 style="font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem;">Ready to Unlock Your Ideal Physique?</h2>
+  <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 1.75rem;">
+    Create your account today, enter your physical attributes, and let our machine learning engine construct your personalized fitness blueprint.
+  </p>
+  <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+    <i class="fa-solid fa-user-plus"></i> Create Free Account
+  </a>
+</section>
+{% endblock %}

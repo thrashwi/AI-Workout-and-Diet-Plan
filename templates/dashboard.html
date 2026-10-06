@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | AI-Workout and Diet Plan{% endblock %}
+
+{% block content %}
+<!-- Top Header & Streak -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">
+      Hello, {{ current_user.full_name or current_user.username }}! 👋
+    </h1>
+    <p style="color: var(--text-muted);">
+      Today is <strong style="color: #fff;">{{ today_name }}</strong>. Stay disciplined with your daily workout and nutrition goals.
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.6rem 1.25rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.6rem;">
+      <i class="fa-solid fa-fire" style="color: var(--warning); font-size: 1.25rem;"></i>
+      <div>
+        <div style="font-size: 0.72rem; color: #fde68a; font-weight: 700; text-transform: uppercase;">Fitness Streak</div>
+        <div style="color: #fff; font-weight: 800; font-size: 1.1rem;">{{ streak_days }} Days</div>
+      </div>
+    </div>
+    <a href="{{ url_for('recommendations') }}" class="btn btn-primary">
+      <i class="fa-solid fa-dumbbell"></i> View Full AI Plan
+    </a>
+  </div>
+</div>
+
+<!-- 4 Key Metric Cards -->
+<div class="grid-4" style="margin-bottom: 2.5rem;">
+  <!-- BMI Card -->
+  <div class="stat-card">
+    <div class="stat-icon primary"><i class="fa-solid fa-weight-scale"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Body Mass Index</div>
+      <div class="stat-value">{{ "%.1f"|format(bmi) }}</div>
+      <div class="stat-subtitle">
+        <span class="badge badge-{{ bmi_color }}" style="font-size: 0.72rem; padding: 2px 6px;">{{ bmi_category }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Caloric Target -->
+  <div class="stat-card">
+    <div class="stat-icon secondary"><i class="fa-solid fa-fire-flame-curved"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Daily Target</div>
+      <div class="stat-value">{{ rec.target_calories|int if rec else 2100 }} <span style="font-size: 0.9rem; font-weight: 400;">kcal</span></div>
+      <div class="stat-subtitle">BMR: {{ rec.bmr|int if rec else 1650 }} | TDEE: {{ rec.tdee|int if rec else 2300 }}</div>
+    </div>
+  </div>
+
+  <!-- Hydration Card -->
+  <div class="stat-card">
+    <div class="stat-icon accent"><i class="fa-solid fa-droplet"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Hydration Target</div>
+      <div class="stat-value" id="dashboard-water-val">{{ "%.1f"|format((today_log.water_ml / 1000) if today_log and today_log.water_ml else 0.0) }} / {{ rec.water_intake_liters if rec else 2.5 }} L</div>
+      <div class="stat-subtitle" style="margin-top: 0.4rem;">
+        <button onclick="window.logQuickWater(250)" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 2px 8px;">
+          +250ml Log
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Program Split -->
+  <div class="stat-card">
+    <div class="stat-icon warning"><i class="fa-solid fa-calendar-check"></i></div>
+    <div class="stat-info">
+      <div class="stat-label">Routine Split</div>
+      <div class="stat-value" style="font-size: 1.15rem; margin-top: 0.2rem;">
+        {{ workout_plan.split_name if workout_plan else 'Full Body' }}
+      </div>
+      <div class="stat-subtitle">{{ profile.exercise_frequency }} sessions / week</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main 2-Column Dashboard Sections: Today's Workout & Today's Nutrition -->
+<div class="grid-2" style="margin-bottom: 2.5rem;">
+  <!-- Today's Workout Plan -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">
+          <i class="fa-solid fa-person-running" style="color: var(--primary);"></i> Today's Workout
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">
+          {{ today_workout.focus if today_workout else 'Rest or Mobility Day' }}
+        </p>
+      </div>
+      <span class="badge badge-info">{{ today_workout.type if today_workout else 'Recovery' }}</span>
+    </div>
+
+    {% if today_workout and today_workout.exercises and today_workout.exercises|length > 0 %}
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for ex in today_workout.exercises %}
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-dark); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">{{ ex.name }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                <span style="color: var(--primary);">{{ ex.sets }} sets</span> &times; {{ ex.reps }} | Rest: {{ ex.rest }}
+              </div>
+            </div>
+            <a href="{{ url_for('videos') }}?q={{ ex.name }}" class="btn btn-outline btn-sm" title="Watch Form Video">
+              <i class="fa-solid fa-play"></i> Form
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+        <i class="fa-solid fa-bed" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--secondary);"></i>
+        <h4 style="color: #fff; margin-bottom: 0.5rem;">Scheduled Recovery Day</h4>
+        <p style="font-size: 0.9rem;">Rest, drink plenty of water, and allow your muscle fibers to rebuild. Light walking or mobility is encouraged.</p>
+      </div>
+    {% endif %}
+
+    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <a href="{{ url_for('recommendations') }}#workout-tab" class="btn btn-secondary btn-sm">
+        Full 7-Day Routine <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <a href="{{ url_for('progress') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-check"></i> Mark Workout Done
+      </a>
+    </div>
+  </div>
+
+  <!-- Today's Nutrition Overview -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">
+          <i class="fa-solid fa-utensils" style="color: var(--secondary);"></i> Today's Nutrition Breakdown
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">
+          Target: {{ rec.target_calories|int if rec else 2100 }} kcal &bull; {{ diet_plan.dietary_preference if diet_plan else 'Balanced' }}
+        </p>
+      </div>
+      <a href="{{ url_for('recommendations') }}#diet-tab" class="btn btn-outline btn-sm">Full Menu</a>
+    </div>
+
+    <!-- Macronutrient Mini Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 0.75rem; border-radius: var(--radius-md); text-align: center; border-left: 3px solid var(--primary);">
+        <div style="font-size: 0.75rem; color: var(--text-muted);">PROTEIN</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #fff;">{{ rec.protein_g|int if rec else 150 }}g</div>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 0.75rem; border-radius: var(--radius-md); text-align: center; border-left: 3px solid var(--secondary);">
+        <div style="font-size: 0.75rem; color: var(--text-muted);">CARBS</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #fff;">{{ rec.carbs_g|int if rec else 220 }}g</div>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 0.75rem; border-radius: var(--radius-md); text-align: center; border-left: 3px solid var(--warning);">
+        <div style="font-size: 0.75rem; color: var(--text-muted);">FATS</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #fff;">{{ rec.fat_g|int if rec else 65 }}g</div>
+      </div>
+    </div>
+
+    {% if today_diet and today_diet.meals %}
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for meal_slot, meal in today_diet.meals.items() %}
+          <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-dark); border-radius: var(--radius-md); padding: 0.75rem 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--secondary);">{{ meal_slot }}</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">{{ meal.calories }} kcal &bull; {{ meal.p }}g P</span>
+            </div>
+            <div style="color: #cbd5e1; font-size: 0.88rem; margin-top: 2px;">{{ meal.name }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Quick Fitness Modules Row -->
+<div class="grid-3">
+  <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+    <i class="fa-solid fa-map-location-dot" style="font-size: 2.25rem; color: var(--primary); margin-bottom: 1rem;"></i>
+    <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.5rem;">Find Nearby Gyms</h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+      Locate premier fitness centers, powerlifting gyms, and fitness studios in your vicinity with driving directions.
+    </p>
+    <a href="{{ url_for('gyms') }}" class="btn btn-outline" style="width: 100%;">
+      Explore Map <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+    <i class="fa-solid fa-circle-play" style="font-size: 2.25rem; color: var(--secondary); margin-bottom: 1rem;"></i>
+    <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.5rem;">Exercise & Meal Videos</h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+      Watch step-by-step masterclasses on lifting technique and quick, nutritious meal prep recipes.
+    </p>
+    <a href="{{ url_for('videos') }}" class="btn btn-outline" style="width: 100%;">
+      Watch Library <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+    <i class="fa-solid fa-chart-line" style="font-size: 2.25rem; color: var(--accent); margin-bottom: 1rem;"></i>
+    <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.5rem;">Log Progress & Weight</h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+      Track body weight, waist measurements, and calories burned with interactive Chart.js graphs.
+    </p>
+    <a href="{{ url_for('progress') }}" class="btn btn-outline" style="width: 100%;">
+      Track Progress <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+</div>
+{% endblock %}

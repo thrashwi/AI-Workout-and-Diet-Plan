@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AI-Workout and Diet Plan{% endblock %}</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <span>FitAI <span style="font-weight: 400; font-size: 0.95rem; color: var(--secondary);">Plan</span></span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav-links">
+        {% if current_user %}
+          <li><a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+          <li><a href="{{ url_for('recommendations') }}" class="nav-link {% if request.endpoint == 'recommendations' %}active{% endif %}"><i class="fa-solid fa-dumbbell"></i> AI Plan</a></li>
+          <li><a href="{{ url_for('videos') }}" class="nav-link {% if request.endpoint == 'videos' %}active{% endif %}"><i class="fa-solid fa-circle-play"></i> Videos</a></li>
+          <li><a href="{{ url_for('gyms') }}" class="nav-link {% if request.endpoint == 'gyms' %}active{% endif %}"><i class="fa-solid fa-map-location-dot"></i> Nearby Gyms</a></li>
+          <li><a href="{{ url_for('progress') }}" class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}"><i class="fa-solid fa-chart-line"></i> Progress</a></li>
+          <li><a href="/future-prediction" class="future-prediction">
+    <i class="fas fa-chart-line"></i>
+    <span>Future<br>Prediction</span>
+</a></li>
+          <li>
+          
+    <a href="{{ url_for('chatbot') }}"
+       class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}">
+        <i class="fa-solid fa-robot"></i> AI Fitness Chatbot
+    </a>
+</li>
+          <li>
+            <a href="{{ url_for('reminders') }}" class="nav-link {% if request.endpoint == 'reminders' %}active{% endif %}">
+              <i class="fa-solid fa-bell"></i> Reminders
+              {% if active_reminders_count > 0 %}
+                <span class="nav-badge">{{ active_reminders_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+        {% else %}
+          <li><a href="{{ url_for('index') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a></li>
+          <li><a href="{{ url_for('index') }}#features" class="nav-link"><i class="fa-solid fa-star"></i> Features</a></li>
+          <li><a href="{{ url_for('index') }}#bmi-calculator" class="nav-link"><i class="fa-solid fa-calculator"></i> Quick BMI</a></li>
+        {% endif %}
+      </ul>
+
+      <div class="nav-actions">
+        {% if current_user %}
+          <a href="{{ url_for('profile') }}" class="btn btn-outline btn-sm" title="Edit Profile">
+            <i class="fa-solid fa-user-gear"></i> {{ current_user.full_name or current_user.username }}
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm" title="Sign Out">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">Log In</a>
+          <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Get Started</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <span><i class="fa-solid fa-circle-info"></i> {{ message }}</span>
+              <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Body -->
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Video Modal -->
+  <div id="video-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="modal-video-title" style="color: #fff; font-size: 1.1rem;">Video Demonstration</h4>
+        <button onclick="window.closeVideoModal()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="video-responsive-frame">
+          <iframe id="modal-video-frame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="brand-icon" style="width: 28px; height: 28px; font-size: 0.9rem;">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <strong style="color: #fff; font-size: 1.1rem;">AI-Workout and Diet Plan</strong>
+      </div>
+      <p class="footer-copy">&copy; 2025 AI Workout and Diet Plan. Powered by Machine Learning & Sports Nutrition Science.</p>
+      <p class="footer-disclaimer">
+        Disclaimer: This system is intended as an educational fitness-support and recommendation application and does not replace professional medical, nutritional, or clinical advice. Consult a healthcare provider before beginning any intense training or diet regimen.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/reminders.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

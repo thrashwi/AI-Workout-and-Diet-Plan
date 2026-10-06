@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Nearby Gym & Fitness Center Search | FitAI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">Nearby Gym & Fitness Locator</h1>
+      <p style="color: var(--text-muted);">
+        Find verified gyms, powerlifting spaces, and fitness studios equipped for your training routine.
+      </p>
+    </div>
+
+    <!-- Map Search Bar -->
+    <div style="display: flex; gap: 0.5rem; max-width: 450px; width: 100%;">
+      <input type="text" id="gym-query-input" class="form-control" placeholder="Search gym name or neighborhood...">
+      <button type="button" id="gym-search-btn" class="btn btn-primary" title="Search Gyms">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <button type="button" id="locate-me-btn" class="btn btn-secondary" title="Use My Current GPS Location">
+        <i class="fa-solid fa-location-crosshairs"></i> Near Me
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Map and Gyms List Grid -->
+<div class="grid-3" style="grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem;">
+  <!-- Leaflet Map Container -->
+  <div>
+    <div id="gym-map"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; font-size: 0.82rem; color: var(--text-muted);">
+      <span>📍 Interactive OpenStreetMap &bull; Drag and zoom map to explore</span>
+      <span>🟢 Green pins = Fitness Centers &bull; 🔵 Blue pin = Your Location</span>
+    </div>
+  </div>
+
+  <!-- Gyms Results Sidebar -->
+  <div>
+    <h3 style="color: #fff; font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fa-solid fa-dumbbell" style="color: var(--primary);"></i> Fitness Centers Nearby
+    </h3>
+    <div id="gym-results-list" style="max-height: 480px; overflow-y: auto; padding-right: 0.25rem;">
+      <!-- Populated dynamically by map.js -->
+    </div>
+  </div>
+</div>
+
+<!-- Saved Favorite Gyms -->
+{% if favorites and favorites|length > 0 %}
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-star" style="color: var(--warning);"></i> Your Saved Gyms
+      </h3>
+      <span class="badge badge-warning">{{ favorites|length }} Saved</span>
+    </div>
+    <div class="grid-3">
+      {% for f in favorites %}
+        <div class="card" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-dark);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <h4 style="color: #fff; font-size: 1rem;">{{ f.gym_name }}</h4>
+            <span class="badge badge-success">⭐ {{ f.rating }}</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0.75rem;">
+            📍 {{ f.address or 'Address not specified' }}
+          </p>
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="https://www.google.com/maps/dir/?api=1&destination={{ f.latitude }},{{ f.longitude }}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1;">
+              Get Directions
+            </a>
+            <button onclick="saveGymFavorite('{{ f.gym_name|replace('\'', '\\\'') }}', '', 0, 0, 0)" class="btn btn-danger btn-sm" title="Remove from favorites">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

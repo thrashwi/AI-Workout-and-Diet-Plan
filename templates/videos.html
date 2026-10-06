@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Exercise & Cooking Videos | FitAI{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+
+    <div>
+      <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">
+        Fitness & Cooking Video Library
+      </h1>
+
+      <p style="color: var(--text-muted);">
+        Master biomechanical exercise execution and prepare delicious high-protein meals with our curated tutorials.
+      </p>
+    </div>
+
+    <!-- Search -->
+    <form
+      action="{{ url_for('videos') }}"
+      method="GET"
+      style="display: flex; gap: 0.5rem; max-width: 380px; width: 100%;"
+    >
+
+      {% if active_category != 'all' %}
+      <input
+        type="hidden"
+        name="category"
+        value="{{ active_category }}"
+      >
+      {% endif %}
+
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Search exercises, recipes..."
+        value="{{ search_query }}"
+      >
+
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+
+    </form>
+
+  </div>
+</div>
+
+
+<!-- Category Filter -->
+<div
+  style="
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  "
+>
+
+  <a
+    href="{{ url_for('videos', category='all', q=search_query) }}"
+    class="btn {% if active_category == 'all' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm"
+  >
+    <i class="fa-solid fa-border-all"></i>
+    All Tutorials
+  </a>
+
+  <a
+    href="{{ url_for('videos', category='workout', q=search_query) }}"
+    class="btn {% if active_category == 'workout' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm"
+  >
+    <i class="fa-solid fa-dumbbell"></i>
+    Exercise & Lifting Form
+  </a>
+
+  <a
+    href="{{ url_for('videos', category='diet', q=search_query) }}"
+    class="btn {% if active_category == 'diet' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm"
+  >
+    <i class="fa-solid fa-kitchen-set"></i>
+    Healthy Food Preparation
+  </a>
+
+</div>
+
+
+<!-- Video Cards -->
+{% if videos and videos|length > 0 %}
+
+<div class="grid-3">
+
+  {% for v in videos %}
+
+  <div class="video-card">
+
+    <!-- Thumbnail -->
+    <div
+      class="video-thumb-container video-open"
+      data-video-url="{{ v.embed_url }}"
+      data-video-title="{{ v.title }}"
+      style="cursor: pointer;"
+    >
+
+      <img
+        src="{{ v.thumbnail }}"
+        alt="{{ v.title }}"
+        class="video-thumb"
+        loading="lazy"
+      >
+
+      <div class="video-play-btn">
+        <i class="fa-solid fa-play"></i>
+      </div>
+
+      <!-- Duration -->
+      <span
+        style="
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          background: rgba(0,0,0,0.8);
+          color: #fff;
+          font-size: 0.75rem;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-weight: 600;
+        "
+      >
+        {{ v.duration }}
+      </span>
+
+      <!-- Category -->
+      <span
+        class="badge {% if v.category == 'workout' %}badge-success{% else %}badge-info{% endif %}"
+        style="
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          text-transform: uppercase;
+          font-size: 0.7rem;
+          font-weight: 700;
+        "
+      >
+        {{ v.subcategory }}
+      </span>
+
+    </div>
+
+
+    <!-- Video Body -->
+    <div class="video-body">
+
+      <div>
+
+        <h3
+          style="
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            line-height: 1.35;
+          "
+        >
+          {{ v.title }}
+        </h3>
+
+        <p
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+          "
+        >
+          {{ v.description }}
+        </p>
+
+      </div>
+
+
+      <!-- Bottom -->
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-top: 1px solid var(--border-dark);
+          padding-top: 0.75rem;
+        "
+      >
+
+        <span
+          style="
+            font-size: 0.78rem;
+            color: #94a3b8;
+          "
+        >
+          <i class="fa-solid fa-gauge-simple-high"></i>
+          {{ v.difficulty }}
+        </span>
+
+
+        <!-- Watch Button -->
+        <button
+          type="button"
+          class="btn btn-outline btn-sm video-open"
+          data-video-url="{{ v.embed_url }}"
+          data-video-title="{{ v.title }}"
+        >
+          <i class="fa-solid fa-play"></i>
+          Watch Now
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  {% endfor %}
+
+</div>
+
+
+{% else %}
+
+<!-- No Videos -->
+<div
+  class="card"
+  style="
+    text-align: center;
+    padding: 3rem 1rem;
+  "
+>
+
+  <i
+    class="fa-solid fa-film"
+    style="
+      font-size: 3rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    "
+  ></i>
+
+  <h3
+    style="
+      color: #fff;
+      margin-bottom: 0.5rem;
+    "
+  >
+    No videos match your search
+  </h3>
+
+  <p
+    style="
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    "
+  >
+    Try clearing your search query or switching categories.
+  </p>
+
+  <a
+    href="{{ url_for('videos') }}"
+    class="btn btn-secondary btn-sm"
+  >
+    Reset Filter
+  </a>
+
+</div>
+
+{% endif %}
+
+
+<!-- Video JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const videoButtons = document.querySelectorAll(".video-open");
+
+    videoButtons.forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const videoUrl = this.dataset.videoUrl;
+            const videoTitle = this.dataset.videoTitle;
+
+            if (typeof openVideoModal === "function") {
+                openVideoModal(videoUrl, videoTitle);
+            } else {
+                console.error("openVideoModal function not found.");
+            }
+
+        });
+
+    });
+
+});
+</script>
+
+{% endblock %}

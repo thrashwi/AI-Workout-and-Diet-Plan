@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Register | AI-Workout and Diet Plan{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 2.5rem auto;">
+  <div class="card">
+    <div class="card-header" style="text-align: center; display: block; border-bottom: none; padding-bottom: 0;">
+      <div class="brand-icon" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.5rem;">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <h2 style="color: #fff; font-size: 1.6rem; font-weight: 800;">Create Account</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+        Join FitAI to generate your custom workout & meal plans.
+      </p>
+    </div>
+
+    <form action="{{ url_for('register') }}" method="POST" style="margin-top: 1.5rem;">
+      <div class="form-group">
+        <label class="form-label" for="username">Username *</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="e.g. alex_fitness" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address *</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="alex@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="full_name">Full Name</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Alex Morgan">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password (min. 6 characters) *</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Confirm Password *</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required minlength="6">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        <i class="fa-solid fa-arrow-right"></i> Register & Set Up Profile
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-dark); font-size: 0.9rem; color: var(--text-muted);">
+      Already have an account? <a href="{{ url_for('login') }}" style="font-weight: 600; color: var(--primary);">Sign In</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Fitness Chatbot</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 700px;
+            margin: 80px auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #059669;
+        }
+
+        .response {
+            margin-top: 25px;
+            padding: 20px;
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        .response h3 {
+            color: #10b981;
+            margin-top: 0;
+        }
+
+        .response p {
+            color: white;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🤖 AI Fitness Chatbot</h1>
+
+    <p class="subtitle">
+        Ask me anything about workouts, diet, protein, water or BMI.
+    </p>
+
+    <!-- CHATBOT FORM -->
+    <form method="POST" action="{{ url_for('chatbot') }}">
+
+        <input
+            type="text"
+            name="question"
+            id="question"
+            placeholder="Example: What is a good beginner workout?"
+            required
+        >
+
+        <button type="submit">
+            🤖 Ask AI
+        </button>
+
+    </form>
+
+    <!-- RESPONSE -->
+    <div class="response">
+
+        <h3>🤖 AI Fitness Assistant</h3>
+
+        {% if response %}
+            <p>{{ response }}</p>
+        {% else %}
+            <p>Ask me a fitness-related question.</p>
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+</html>
