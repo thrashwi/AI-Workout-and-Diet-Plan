@@ -5,7 +5,15 @@
 {% block content %}
 
 <div style="margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+    "
+  >
 
     <div>
       <h1 style="color: #fff; font-size: 2.2rem; font-weight: 800;">
@@ -13,15 +21,22 @@
       </h1>
 
       <p style="color: var(--text-muted);">
-        Master biomechanical exercise execution and prepare delicious high-protein meals with our curated tutorials.
+        Master biomechanical exercise execution and prepare delicious
+        high-protein meals with our curated tutorials.
       </p>
     </div>
 
-    <!-- Search -->
+
+    <!-- Search Project Videos -->
     <form
       action="{{ url_for('videos') }}"
       method="GET"
-      style="display: flex; gap: 0.5rem; max-width: 380px; width: 100%;"
+      style="
+        display: flex;
+        gap: 0.5rem;
+        max-width: 380px;
+        width: 100%;
+      "
     >
 
       {% if active_category != 'all' %}
@@ -69,6 +84,7 @@
     All Tutorials
   </a>
 
+
   <a
     href="{{ url_for('videos', category='workout', q=search_query) }}"
     class="btn {% if active_category == 'workout' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm"
@@ -76,6 +92,7 @@
     <i class="fa-solid fa-dumbbell"></i>
     Exercise & Lifting Form
   </a>
+
 
   <a
     href="{{ url_for('videos', category='diet', q=search_query) }}"
@@ -88,7 +105,122 @@
 </div>
 
 
-<!-- Video Cards -->
+<!-- =========================================================
+     SEARCH MORE VIDEOS FROM INTERNET
+     ========================================================= -->
+
+<div
+  class="card"
+  style="
+    margin-bottom: 2rem;
+    padding: 1.75rem;
+    text-align: center;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(108, 99, 255, 0.12),
+        rgba(0, 194, 255, 0.08)
+      );
+    border: 1px solid var(--border-dark);
+  "
+>
+
+  <!-- YouTube Icon -->
+  <div style="margin-bottom: 0.75rem;">
+    <i
+      class="fa-brands fa-youtube"
+      style="
+        font-size: 2.5rem;
+        color: #ff0000;
+      "
+    ></i>
+  </div>
+
+
+  <!-- Heading -->
+  <h2
+    style="
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    "
+  >
+    Didn't Find What You're Looking For?
+  </h2>
+
+
+  <!-- Description -->
+  <p
+    style="
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    "
+  >
+    Search the internet for more workout, exercise, fitness,
+    cooking, nutrition, and recipe videos.
+  </p>
+
+
+  <!-- Internet Video Search -->
+  <form
+    action="https://www.youtube.com/results"
+    method="GET"
+    target="_blank"
+    style="
+      display: flex;
+      gap: 0.5rem;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    "
+  >
+
+    <input
+      type="text"
+      name="search_query"
+      class="form-control"
+      placeholder="Search for any video..."
+      required
+      autocomplete="off"
+    >
+
+    <button
+      type="submit"
+      class="btn btn-primary"
+      style="white-space: nowrap;"
+    >
+      <i class="fa-solid fa-globe"></i>
+      Search Internet
+    </button>
+
+  </form>
+
+
+  <!-- Examples -->
+  <div
+    style="
+      margin-top: 1rem;
+      color: #94a3b8;
+      font-size: 0.8rem;
+    "
+  >
+    Try:
+    <span>Yoga for beginners</span> •
+    <span>Chest workout</span> •
+    <span>Weight loss exercise</span> •
+    <span>High protein breakfast</span>
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     PROJECT VIDEO CARDS
+     ========================================================= -->
+
 {% if videos and videos|length > 0 %}
 
 <div class="grid-3">
@@ -112,9 +244,12 @@
         loading="lazy"
       >
 
+
+      <!-- Play Button -->
       <div class="video-play-btn">
         <i class="fa-solid fa-play"></i>
       </div>
+
 
       <!-- Duration -->
       <span
@@ -133,9 +268,15 @@
         {{ v.duration }}
       </span>
 
+
       <!-- Category -->
       <span
-        class="badge {% if v.category == 'workout' %}badge-success{% else %}badge-info{% endif %}"
+        class="badge
+        {% if v.category == 'workout' %}
+          badge-success
+        {% else %}
+          badge-info
+        {% endif %}"
         style="
           position: absolute;
           top: 8px;
@@ -156,6 +297,7 @@
 
       <div>
 
+        <!-- Video Title -->
         <h3
           style="
             color: #fff;
@@ -168,6 +310,8 @@
           {{ v.title }}
         </h3>
 
+
+        <!-- Description -->
         <p
           style="
             color: var(--text-muted);
@@ -193,6 +337,7 @@
         "
       >
 
+        <!-- Difficulty -->
         <span
           style="
             font-size: 0.78rem;
@@ -228,7 +373,10 @@
 
 {% else %}
 
-<!-- No Videos -->
+<!-- =========================================================
+     NO PROJECT VIDEOS
+     ========================================================= -->
+
 <div
   class="card"
   style="
@@ -246,6 +394,7 @@
     "
   ></i>
 
+
   <h3
     style="
       color: #fff;
@@ -255,19 +404,58 @@
     No videos match your search
   </h3>
 
+
   <p
     style="
       color: var(--text-muted);
       margin-bottom: 1.5rem;
     "
   >
-    Try clearing your search query or switching categories.
+    Try clearing your search query or search the internet
+    for more videos below.
   </p>
 
+
+  <!-- Internet Search From No Results -->
+  <form
+    action="https://www.youtube.com/results"
+    method="GET"
+    target="_blank"
+    style="
+      display: flex;
+      gap: 0.5rem;
+      max-width: 600px;
+      margin: 0 auto 1rem;
+    "
+  >
+
+    <input
+      type="text"
+      name="search_query"
+      class="form-control"
+      placeholder="Search YouTube for what you want..."
+      value="{{ search_query }}"
+      required
+    >
+
+    <button
+      type="submit"
+      class="btn btn-primary"
+      style="white-space: nowrap;"
+    >
+      <i class="fa-brands fa-youtube"></i>
+      Search
+    </button>
+
+  </form>
+
+
+  <!-- Reset -->
   <a
     href="{{ url_for('videos') }}"
     class="btn btn-secondary btn-sm"
   >
+    <i class="fa-solid fa-rotate-left"></i>
     Reset Filter
   </a>
 
@@ -276,7 +464,10 @@
 {% endif %}
 
 
-<!-- Video JavaScript -->
+<!-- =========================================================
+     VIDEO JAVASCRIPT
+     ========================================================= -->
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -290,9 +481,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const videoTitle = this.dataset.videoTitle;
 
             if (typeof openVideoModal === "function") {
+
                 openVideoModal(videoUrl, videoTitle);
+
             } else {
-                console.error("openVideoModal function not found.");
+
+                console.error(
+                    "openVideoModal function not found."
+                );
+
             }
 
         });
@@ -301,5 +498,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
+
 
 {% endblock %}
