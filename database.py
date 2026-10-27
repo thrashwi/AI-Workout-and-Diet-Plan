@@ -59,7 +59,14 @@ def init_db():
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         full_name TEXT,
+        role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('user', 'admin')),
+        is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+        setting_key TEXT PRIMARY KEY,
+        setting_value TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS user_profiles (
@@ -155,6 +162,13 @@ def init_db():
         ON DELETE CASCADE
     );
     """)
+
+    # Migrate existing databases without deleting existing users or fitness data.
+    user_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(users)").fetchall()}
+    if "role" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
+    if "is_active" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
 
     conn.commit()
     conn.close()

@@ -1,0 +1,18 @@
+{% extends 'admin/base.html' %}{% block title %}Overview · FitAI Admin{% endblock %}{% block content %}
+<h1>Overview</h1><p class="subhead">A live snapshot of users, fitness activity, and application data.</p>
+<div class="stats">
+  <article class="card"><div class="stat-label">Registered users</div><div class="stat-value">{{ stats.total_users }}</div><div class="stat-note">Normal user accounts</div></article>
+  <article class="card"><div class="stat-label">Active accounts</div><div class="stat-value">{{ stats.active_users }}</div><div class="stat-note">{{ stats.inactive_users }} inactive</div></article>
+  <article class="card"><div class="stat-label">Fitness profiles</div><div class="stat-value">{{ stats.profiles }}</div><div class="stat-note">Profile completion records</div></article>
+  <article class="card"><div class="stat-label">Admin accounts</div><div class="stat-value">{{ stats.admins }}</div><div class="stat-note">Restricted access</div></article>
+</div>
+<div class="grid2"><section class="card"><h2>Platform activity</h2>
+  {% for label, value in [('AI recommendations',stats.recommendations),('Progress logs',stats.progress_logs),('Reminders',stats.reminders),('Favorite gyms',stats.favorites)] %}<div class="barrow"><span>{{ label }}</span><div class="bar"><span style="width:{{ (value * 100 / ([stats.recommendations,stats.progress_logs,stats.reminders,stats.favorites,1]|max))|round|int }}%"></span></div><strong>{{ value }}</strong></div>{% endfor %}
+  <div class="toolbar section-gap"><a class="button" href="{{ url_for('admin_users') }}">Manage users</a><a class="button muted-button" href="{{ url_for('admin_recommendations') }}">View fitness data</a></div>
+</section><section class="card"><h2>Fitness goals</h2>
+  {% if goals %}{% set max_goal = goals|map(attribute='total')|max %}{% for goal in goals %}<div class="barrow"><span>{{ goal.goal|replace('_',' ')|title }}</span><div class="bar"><span style="width:{{ (goal.total * 100 / max_goal)|round|int }}%"></span></div><strong>{{ goal.total }}</strong></div>{% endfor %}{% else %}<div class="empty">No fitness profiles yet.</div>{% endif %}
+</section></div>
+<section class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Recently registered users</h2><a href="{{ url_for('admin_users') }}">View all →</a></div><div class="tablewrap"><table><thead><tr><th>User</th><th>Email</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>
+{% for user in recent_users %}<tr><td><strong>{{ user.full_name or user.username }}</strong><br><span style="color:var(--muted)">@{{ user.username }}</span></td><td>{{ user.email }}</td><td>{{ user.created_at or '—' }}</td><td><span class="pill {{ 'green' if user.is_active else 'red' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td><td><a href="{{ url_for('admin_user_detail',user_id=user.id) }}">Details</a></td></tr>{% else %}<tr><td colspan="5" class="empty">No users registered yet.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

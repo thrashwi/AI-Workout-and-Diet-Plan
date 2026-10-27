@@ -1,0 +1,8 @@
+{% extends 'admin/base.html' %}{% block title %}Administrator Sign In · FitAI{% endblock %}
+{% block login_content %}
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px"><section class="card" style="width:100%;max-width:430px;padding:32px">
+  <div class="brand" style="margin:0">Fit<span>AI</span></div><div class="eyebrow" style="margin-top:25px">Restricted area</div><h1 style="font-size:29px;margin-top:7px">Admin sign in</h1><p>Use the administrator account created from the project terminal. Public admin registration is disabled.</p>
+  <form method="post" style="margin-top:24px"><label for="username">Username or email</label><input class="field" id="username" name="username" autocomplete="username" required style="margin:7px 0 17px"><label for="password">Password</label><input class="field" id="password" type="password" name="password" autocomplete="current-password" required style="margin:7px 0 20px"><button type="submit" style="width:100%">Sign in securely</button></form>
+  <p style="font-size:12px;margin-top:20px">Normal users should continue using the regular <a href="{{ url_for('login') }}">user login</a>.</p>
+</section></div>
+{% endblock %}

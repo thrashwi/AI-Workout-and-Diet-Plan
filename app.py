@@ -32,8 +32,47 @@ def login_required(f):
         if "user_id" not in session:
             flash("Please sign in to access your fitness dashboard.", "info")
             return redirect(url_for("login", next=request.url))
+        account = query_db("SELECT role, is_active FROM users WHERE id = ?", (session["user_id"],), one=True)
+        if not account or account.get("role", "user") != "user" or not account.get("is_active", 1):
+            session.pop("user_id", None)
+            session.pop("username", None)
+            flash("This account cannot access the user dashboard.", "danger")
+            return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def admin_required(f):
+    """Authorize each request against the database, not a client-controlled role flag."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        admin_id = session.get("admin_id")
+        if not admin_id:
+            flash("Please sign in with an administrator account.", "info")
+            return redirect(url_for("admin_login", next=request.path))
+        admin = query_db("SELECT id, role, is_active FROM users WHERE id = ?", (admin_id,), one=True)
+        if not admin or admin.get("role") != "admin" or not admin.get("is_active", 1):
+            session.clear()
+            flash("Administrator access is not permitted for this account.", "danger")
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def _admin_csrf_token():
+    token = session.get("admin_csrf_token")
+    if not token:
+        import secrets
+        token = secrets.token_urlsafe(32)
+        session["admin_csrf_token"] = token
+    return token
+
+
+def _valid_admin_csrf():
+    import hmac
+    supplied = request.form.get("csrf_token", "")
+    expected = session.get("admin_csrf_token", "")
+    return bool(supplied and expected and hmac.compare_digest(supplied, expected))
 
 
 def get_current_user():
@@ -254,14 +293,18 @@ def login():
             one=True
         )
 
-        if user and check_password_hash(user["password_hash"], password):
+        if user and check_password_hash(user["password_hash"], password) and user.get("is_active", 1):
+            if user.get("role", "user") == "admin":
+                flash("Please use the separate administrator sign-in page.", "info")
+                return redirect(url_for("admin_login"))
+            session.clear()
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             flash(f"Welcome back, {user['full_name'] or user['username']}!", "success")
             next_url = request.args.get("next")
             return redirect(next_url or url_for("dashboard"))
         else:
-            flash("Invalid username or password. Please check your credentials.", "danger")
+            flash("Invalid username or password, or this account is inactive.", "danger")
 
     return render_template("login.html")
 @app.route('/forgot-password', methods=['GET', 'POST'])
@@ -1198,6 +1241,200 @@ def chatbot():
         'chatbot.html',
         response=response
     )
+
+
+# ----------------------------------------------------
+# Administrator portal (separate login + server-side authorization)
+# ----------------------------------------------------
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if session.get("admin_id"):
+        admin = query_db("SELECT role, is_active FROM users WHERE id = ?", (session["admin_id"],), one=True)
+        if admin and admin.get("role") == "admin" and admin.get("is_active", 1):
+            return redirect(url_for("admin_dashboard"))
+        session.clear()
+
+    if request.method == "POST":
+        username_or_email = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
+        account = query_db(
+            "SELECT * FROM users WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND role = 'admin'",
+            (username_or_email, username_or_email), one=True
+        )
+        if account and account.get("is_active", 1) and check_password_hash(account["password_hash"], password):
+            session.clear()
+            session["admin_id"] = account["id"]
+            session["admin_username"] = account["username"]
+            _admin_csrf_token()
+            flash("Administrator sign-in successful.", "success")
+            return redirect(url_for("admin_dashboard"))
+        flash("Invalid administrator credentials or inactive account.", "danger")
+    return render_template("admin/login.html")
+
+
+@app.route("/admin/logout", methods=["POST"])
+@admin_required
+def admin_logout():
+    if not _valid_admin_csrf():
+        flash("Security token expired. Please try again.", "danger")
+        return redirect(url_for("admin_dashboard"))
+    session.clear()
+    flash("Administrator signed out.", "info")
+    return redirect(url_for("admin_login"))
+
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    stats = {
+        "total_users": query_db("SELECT COUNT(*) AS n FROM users WHERE role = 'user'", one=True)["n"],
+        "active_users": query_db("SELECT COUNT(*) AS n FROM users WHERE role = 'user' AND is_active = 1", one=True)["n"],
+        "inactive_users": query_db("SELECT COUNT(*) AS n FROM users WHERE role = 'user' AND is_active = 0", one=True)["n"],
+        "admins": query_db("SELECT COUNT(*) AS n FROM users WHERE role = 'admin'", one=True)["n"],
+        "profiles": query_db("SELECT COUNT(*) AS n FROM user_profiles p JOIN users u ON u.id = p.user_id WHERE u.role = 'user'", one=True)["n"],
+        "progress_logs": query_db("SELECT COUNT(*) AS n FROM progress_logs", one=True)["n"],
+        "recommendations": query_db("SELECT COUNT(*) AS n FROM recommendations", one=True)["n"],
+        "reminders": query_db("SELECT COUNT(*) AS n FROM reminders", one=True)["n"],
+        "favorites": query_db("SELECT COUNT(*) AS n FROM gym_favorites", one=True)["n"],
+    }
+    recent_users = query_db("SELECT id, username, email, full_name, created_at, is_active FROM users WHERE role = 'user' ORDER BY id DESC LIMIT 8")
+    goals = query_db("SELECT COALESCE(p.fitness_goal, 'not set') AS goal, COUNT(*) AS total FROM user_profiles p JOIN users u ON u.id = p.user_id WHERE u.role = 'user' GROUP BY p.fitness_goal ORDER BY total DESC")
+    return render_template("admin/dashboard.html", stats=stats, recent_users=recent_users, goals=goals, csrf_token=_admin_csrf_token())
+
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    search = request.args.get("q", "").strip()
+    if search:
+        like = f"%{search}%"
+        users = query_db("""SELECT u.id, u.username, u.email, u.full_name, u.created_at, u.is_active,
+            p.age, p.gender, p.height_cm, p.weight_kg, p.target_weight_kg, p.fitness_goal,
+            p.activity_level, p.exercise_frequency, p.dietary_preference
+            FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id
+            WHERE u.role = 'user' AND (u.username LIKE ? OR u.email LIKE ? OR COALESCE(u.full_name,'') LIKE ?)
+            ORDER BY u.id DESC LIMIT 250""", (like, like, like))
+    else:
+        users = query_db("""SELECT u.id, u.username, u.email, u.full_name, u.created_at, u.is_active,
+            p.age, p.gender, p.height_cm, p.weight_kg, p.target_weight_kg, p.fitness_goal,
+            p.activity_level, p.exercise_frequency, p.dietary_preference
+            FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id
+            WHERE u.role = 'user' ORDER BY u.id DESC LIMIT 250""")
+    return render_template("admin/users.html", users=users, search=search, csrf_token=_admin_csrf_token())
+
+
+@app.route("/admin/users/<int:user_id>")
+@admin_required
+def admin_user_detail(user_id):
+    user = query_db("""SELECT u.id, u.username, u.email, u.full_name, u.created_at, u.is_active,
+        p.age, p.gender, p.height_cm, p.weight_kg, p.target_weight_kg, p.fitness_goal,
+        p.activity_level, p.exercise_frequency, p.dietary_preference, p.health_conditions
+        FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id
+        WHERE u.id = ? AND u.role = 'user'""", (user_id,), one=True)
+    if not user:
+        flash("User not found.", "warning")
+        return redirect(url_for("admin_users"))
+    progress = query_db("SELECT log_date, weight_kg, bmi, workouts_completed, calories_burned, water_ml, notes FROM progress_logs WHERE user_id = ? ORDER BY log_date DESC, id DESC LIMIT 20", (user_id,))
+    reminders = query_db("SELECT title, reminder_type, reminder_time, is_active FROM reminders WHERE user_id = ? ORDER BY id DESC LIMIT 20", (user_id,))
+    favorites = query_db("SELECT gym_name, address, rating, created_at FROM gym_favorites WHERE user_id = ? ORDER BY id DESC LIMIT 20", (user_id,))
+    return render_template("admin/user_detail.html", user=user, progress=progress, reminders=reminders, favorites=favorites, csrf_token=_admin_csrf_token())
+
+
+@app.route("/admin/users/<int:user_id>/status", methods=["POST"])
+@admin_required
+def admin_toggle_user(user_id):
+    if not _valid_admin_csrf():
+        flash("Security token invalid. Please try again.", "danger")
+        return redirect(url_for("admin_users"))
+    user = query_db("SELECT id, is_active FROM users WHERE id = ? AND role = 'user'", (user_id,), one=True)
+    if not user:
+        flash("User not found.", "warning")
+    else:
+        new_status = 0 if user["is_active"] else 1
+        execute_db("UPDATE users SET is_active = ? WHERE id = ? AND role = 'user'", (new_status, user_id))
+        flash("User account deactivated." if not new_status else "User account reactivated.", "success")
+    return redirect(url_for("admin_user_detail", user_id=user_id))
+
+
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+    if not _valid_admin_csrf():
+        flash("Security token invalid. Please try again.", "danger")
+        return redirect(url_for("admin_users"))
+    # The role condition prevents deleting administrator accounts through this endpoint.
+    account = query_db("SELECT id FROM users WHERE id = ? AND role = 'user'", (user_id,), one=True)
+    if not account:
+        flash("User not found or cannot be deleted.", "warning")
+    else:
+        execute_db("DELETE FROM users WHERE id = ? AND role = 'user'", (user_id,))
+        flash("User and associated records deleted.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/recommendations")
+@admin_required
+def admin_recommendations():
+    rows = query_db("""SELECT r.id, r.bmi, r.bmi_category, r.bmr, r.tdee, r.target_calories,
+        r.created_at, u.username, u.full_name FROM recommendations r
+        JOIN users u ON u.id = r.user_id WHERE u.role = 'user' ORDER BY r.id DESC LIMIT 200""")
+    return render_template("admin/recommendations.html", rows=rows)
+
+
+@app.route("/admin/application", methods=["GET", "POST"])
+@admin_required
+def admin_application():
+    if request.method == "POST":
+        if not _valid_admin_csrf():
+            flash("Security token invalid. Please try again.", "danger")
+            return redirect(url_for("admin_application"))
+        notice = request.form.get("site_notice", "").strip()[:300]
+        execute_db("INSERT INTO app_settings (setting_key, setting_value) VALUES ('site_notice', ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value", (notice,))
+        flash("Application announcement updated.", "success")
+        return redirect(url_for("admin_application"))
+    setting = query_db("SELECT setting_value FROM app_settings WHERE setting_key = 'site_notice'", one=True)
+    modules = [
+        ("User authentication", "Enabled", "Separate user and administrator sign-in"),
+        ("Workout & diet recommendations", "Enabled", "Existing ML and nutrition routes preserved"),
+        ("Progress tracking", "Enabled", "Progress logs and water intake"),
+        ("Reminders & gym favorites", "Enabled", "Existing user features preserved"),
+        ("Admin analytics", "Enabled", "Live totals from the SQLite database"),
+    ]
+    return render_template("admin/application.html", site_notice=setting["setting_value"] if setting else "", modules=modules, csrf_token=_admin_csrf_token())
+
+
+@app.route("/admin/export/users.csv")
+@admin_required
+def admin_export_users():
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "username", "full_name", "email", "created_at", "is_active", "age", "gender", "height_cm", "weight_kg", "target_weight_kg", "fitness_goal", "activity_level", "exercise_frequency", "dietary_preference"])
+    rows = query_db("""SELECT u.id, u.username, u.full_name, u.email, u.created_at, u.is_active,
+        p.age, p.gender, p.height_cm, p.weight_kg, p.target_weight_kg, p.fitness_goal,
+        p.activity_level, p.exercise_frequency, p.dietary_preference FROM users u
+        LEFT JOIN user_profiles p ON p.user_id = u.id WHERE u.role = 'user' ORDER BY u.id""")
+    for row in rows:
+        writer.writerow([row.get(k, "") if row.get(k) is not None else "" for k in ["id", "username", "full_name", "email", "created_at", "is_active", "age", "gender", "height_cm", "weight_kg", "target_weight_kg", "fitness_goal", "activity_level", "exercise_frequency", "dietary_preference"]])
+    from flask import Response
+    return Response(output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=fitai-users.csv"})
+
+
+@app.context_processor
+def inject_site_notice():
+    try:
+        setting = query_db("SELECT setting_value FROM app_settings WHERE setting_key = 'site_notice'", one=True)
+        return {"site_notice": setting["setting_value"] if setting else ""}
+    except Exception:
+        # Startup/migration-safe; the normal app should not fail while the schema initializes.
+        return {"site_notice": ""}
+
+
+@app.context_processor
+def inject_admin_csrf_context():
+    return {"csrf_token": _admin_csrf_token() if session.get("admin_id") else ""}
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=Config.PORT, debug=Config.DEBUG)
